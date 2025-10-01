@@ -1,15 +1,14 @@
 pipeline {
     agent any
 
-    // 使用 tool 指令，并明确指定您在全局工具配置中设置的 Name 和 Jenkins 识别的 Type
+    // 使用 Jenkins 识别的完整类型名作为 tool 指令
     tools {
-        tool name: 'Python-3.12', type: 'jenkins.plugins.shiningpanda.tools.PythonInstallation'
+        jenkins.plugins.shiningpanda.tools.PythonInstallation 'Python-3.12'
     }
 
     stages {
         stage('Verify Python Version') {
             steps {
-                // 现在，Jenkins 应该能正确地找到 Python 并将其加入 PATH
                 bat """
                     @echo off
                     echo "=== 验证Python环境 ==="
@@ -22,10 +21,13 @@ pipeline {
         
         stage('Checkout') {
             steps {
+                // 这个阶段其实可以省略，因为 Jenkins 已经在一开始就拉取了代码来读取 Jenkinsfile
+                // 但保留它也没有坏处，可以确保工作区是最新的
                 git url: 'https://github.com/1kevin0415/Jenkins-demo', branch: 'main'
             }
         }
         
+        // ... 后续其他 stage ...
         stage('Install Dependencies') {
             steps {
                 bat """
