@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         def pythonHome = tool 'Python-3.12'
+        // 将 Python 的主目录和 Scripts 目录都加入 PATH
         PATH = "${pythonHome};${pythonHome}\\Scripts;${env.PATH}"
     }
 
@@ -13,7 +14,7 @@ pipeline {
                     @echo off
                     echo "=== 验证Python环境 ==="
                     python --version
-                    python -m pip --version
+                    pip --version
                     where python
                     echo "Python环境验证通过！"
                 """
@@ -67,14 +68,19 @@ pipeline {
             }
         }
         
+        // ------------------- 最后的修改在这里 -------------------
         stage('Build') {
             steps {
                 bat """
+                    @echo off
                     python -m pip install pyinstaller
-                    python -m pyinstaller --onefile app.py
+                    
+                    rem 直接调用 pyinstaller.exe 命令，而不是通过 python -m
+                    pyinstaller --onefile app.py
                 """
             }
         }
+        // -----------------------------------------------------------
         
         stage('Deploy') {
             steps {
