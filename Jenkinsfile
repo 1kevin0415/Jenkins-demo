@@ -1,17 +1,15 @@
 pipeline {
     agent any
 
-    // 使用 tools 指令来自动配置环境。
-    // 'Python-3.12' 必须和您在 "全局工具配置" -> Python -> "Name" 中设置的完全一样。
+    // 使用 tool 指令，并明确指定您在全局工具配置中设置的 Name 和 Jenkins 识别的 Type
     tools {
-        python 'Python-3.12'
+        tool name: 'Python-3.12', type: 'jenkins.plugins.shiningpanda.tools.PythonInstallation'
     }
 
     stages {
         stage('Verify Python Version') {
             steps {
-                // 因为 tools 指令已经把 python 的路径添加到了系统 PATH 中，
-                // 所以我们可以在命令行里直接调用 python 和 pip 命令。
+                // 现在，Jenkins 应该能正确地找到 Python 并将其加入 PATH
                 bat """
                     @echo off
                     echo "=== 验证Python环境 ==="
@@ -24,9 +22,7 @@ pipeline {
         
         stage('Checkout') {
             steps {
-                // 从代码仓库拉取代码
-                // 注意: 如果是私有仓库，需要提前在 Jenkins 中配置好 Git 凭据。
-                git url: 'https://github.com/zhangping99/myflaskapp.git', branch: 'main'
+                git url: 'https://github.com/1kevin0415/Jenkins-demo', branch: 'main'
             }
         }
         
@@ -43,7 +39,6 @@ pipeline {
         
         stage('Lint') {
             steps {
-                // 代码质量检查
                 bat """
                     pip install flake8
                     flake8 app.py tests/
@@ -53,16 +48,13 @@ pipeline {
         
         stage('Test') {
             steps {
-                // 运行单元测试并生成覆盖率报告
                 bat """
                     pip install pytest pytest-cov
                     pytest --cov=app tests/ --cov-report=html
                 """
             }
             post {
-                // 无论成功失败，都执行
                 always {
-                    // 发布HTML格式的测试覆盖率报告
                     publishHTML(target: [
                         allowMissing: false,
                         alwaysLinkToLastBuild: false,
@@ -77,7 +69,6 @@ pipeline {
         
         stage('Build') {
             steps {
-                // 将Python应用打包成可执行文件
                 bat """
                     pip install pyinstaller
                     pyinstaller --onefile app.py
@@ -87,14 +78,11 @@ pipeline {
         
         stage('Deploy') {
             steps {
-                // 部署阶段的演示
-                // 真实的部署过程会比这复杂，例如：将打包好的文件推送到服务器等。
                 echo 'Deploying application...'
             }
         }
     }
     
-    // post 块定义了流水线运行结束后需要执行的操作
     post {
         success { 
             echo 'CI/CD pipeline completed successfully!' 
