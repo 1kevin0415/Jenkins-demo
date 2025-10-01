@@ -1,19 +1,29 @@
 pipeline {
     agent any
 
-    // 使用 Jenkins 识别的完整类型名作为 tool 指令
-    tools {
-        jenkins.plugins.shiningpanda.tools.PythonInstallation 'Python-3.12'
+    // ------------------- 新的核心改动在这里 -------------------
+    environment {
+        // 1. 使用内置的 'tool' 函数，获取你在网页上配置的工具路径
+        //    'Python-3.12' 必须和你“全局工具配置”里设置的 Name 完全一样
+        def pythonHome = tool 'Python-3.12'
+
+        // 2. 将 Python 的路径添加到系统 PATH 环境变量的最前面
+        //    在 Windows 上，路径分隔符是分号 (;)
+        PATH = "${pythonHome};${env.PATH}"
     }
+    // -----------------------------------------------------------
 
     stages {
-        stage('Verify Python Version') {
+        stage('Verify Python Environment') {
             steps {
+                // 因为我们已经手动把 Python 的路径加入了 PATH，
+                // 现在可以直接调用 python 和 pip 命令了！
                 bat """
                     @echo off
                     echo "=== 验证Python环境 ==="
                     python --version
                     pip --version
+                    where python
                     echo "Python环境验证通过！"
                 """
             }
@@ -21,13 +31,10 @@ pipeline {
         
         stage('Checkout') {
             steps {
-                // 这个阶段其实可以省略，因为 Jenkins 已经在一开始就拉取了代码来读取 Jenkinsfile
-                // 但保留它也没有坏处，可以确保工作区是最新的
                 git url: 'https://github.com/1kevin0415/Jenkins-demo', branch: 'main'
             }
         }
         
-        // ... 后续其他 stage ...
         stage('Install Dependencies') {
             steps {
                 bat """
